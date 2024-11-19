@@ -60,16 +60,25 @@ class _MyHomePageState extends State<MyHomePage> {
   final nameController = TextEditingController();
   final promptController = TextEditingController();
   final emailController = TextEditingController();
+
+  bool emailSuccess = true; 
+  bool nameSuccess = true; 
+
   bool loggedIn = false;
+  bool userAdded = false;
 
   Future<http.Response> getUsers() async {
     return await http
         .get(Uri.parse('https://api.jsonbin.io/v3/b/673a7dfcacd3cb34a8aa3089'));
   }
 
-  Future<http.Response> addUser() async {
+  Future<void> addUser() async {
     String name = nameController.text;
     String prompt = promptController.text;
+    String email = emailController.text;
+    if (name.isEmpty || email.isEmpty) {
+      return;
+    }
     List<dynamic> users = [];
     List<dynamic> prompts = [];
     List<dynamic> emails = [];
@@ -77,9 +86,14 @@ class _MyHomePageState extends State<MyHomePage> {
     var data = jsonDecode(temp.body)['record'];
     users = data['users'];
     prompts = data['prompts'];
+    emails = data['email'];
     users.add(name);
     prompts.add(prompt);
-    return http.put(
+    emails.add(email);
+        setState(() {
+      userAdded = true;
+    });
+    http.put(
       Uri.parse('https://api.jsonbin.io/v3/b/673a7dfcacd3cb34a8aa3089'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
@@ -94,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'prompts': prompts
       }),
     );
+    return;
   }
 
   Future<List<dynamic>> getSecretSanta() async {
@@ -161,8 +176,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextField(
                       controller: emailController,
                       style: TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          border: UnderlineInputBorder(), labelText: 'Email'),
+                      decoration: InputDecoration(
+                          border: UnderlineInputBorder(), labelText: 'Email', errorText: emailController.text.isEmpty ? 'Email is required' : null),
                     ),
                     ElevatedButton(
                         onPressed: () async => login(),
@@ -186,7 +201,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           : Center(
                               child: Text(
                                   "You have already been assigned a Secret Santa, if you have lost this info then please hate yourself coz now we have to start the process all over again"))))
-          : Center(
+          : !userAdded ? Center(
               child: FutureBuilder(
               future: null,
               builder: (context, snapshot) => Column(
@@ -196,11 +211,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.only(
                         left: 20.0, right: 20.0, bottom: 20.0),
                     child: TextFormField(
+                      onChanged: (value) => setState(() {
+                        if (value.isEmpty) {
+                          emailSuccess = false;
+                        } else {
+                          emailSuccess = true;
+                        }
+                      }),
                       controller: emailController,
                       style: TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         border: UnderlineInputBorder(),
-                        labelText: 'Email',
+                        labelText: 'Email'
+                        , errorText: !emailSuccess! ? 'Email is required' : null
                       ),
                     ),
                   ),
@@ -208,11 +231,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.only(
                         left: 20.0, right: 20.0, bottom: 20.0),
                     child: TextFormField(
+                      onChanged: (value) => setState(() {
+                        if (value.isEmpty) {
+                          nameSuccess = false;
+                        } else {
+                          nameSuccess = true;
+                        }
+                      }),
                       controller: nameController,
                       style: TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         border: UnderlineInputBorder(),
                         labelText: 'Name',
+                        errorText: !nameSuccess! ? 'Name is required' : null
                       ),
                     ),
                   ),
@@ -222,9 +253,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: TextFormField(
                       controller: promptController,
                       style: TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         border: UnderlineInputBorder(),
-                        labelText: 'Prompt (optional)',
+                        labelText: 'Prompt (optional)'
                       ),
                     ),
                   ),
@@ -232,7 +263,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: addUser, child: const Text("Submit")),
                 ],
               ),
-            )),
+            )) : Center(child: Text("User Added")),
     );
   }
 }
