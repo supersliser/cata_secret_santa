@@ -61,8 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final promptController = TextEditingController();
   final emailController = TextEditingController();
 
-  bool emailSuccess = true; 
-  bool nameSuccess = true; 
+  bool emailSuccess = true;
+  bool nameSuccess = true;
 
   bool loggedIn = false;
   bool userAdded = false;
@@ -90,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
     users.add(name);
     prompts.add(prompt);
     emails.add(email);
-        setState(() {
+    setState(() {
       userAdded = true;
     });
     http.put(
@@ -144,6 +144,23 @@ class _MyHomePageState extends State<MyHomePage> {
         santaUser = Random().nextInt(users.length);
       }
       usersUsedForSanta.add(santaUser);
+
+    http.put(
+      Uri.parse('https://api.jsonbin.io/v3/b/673a7dfcacd3cb34a8aa3089'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Master-Key':
+            r"$2a$10$8B24A50wKzRmmFYROMEYgeXIoLOQwuWEpRz6AafZLeWBAJOxrwSLC",
+        'X-Access-Key':
+            r"$2a$10$zsqFi1oye8X3pF1UKbAUC.hb34/YEhvi2iDLbN5Xc7MNwb3rcWdOq",
+      },
+      body: jsonEncode(<String, List<dynamic>>{
+        'email': emails,
+        'users': users,
+        'prompts': prompts,
+        'usersGotSanta': usersGotSanta,
+        'usersUsedForSanta': usersUsedForSanta
+      }));
     } else {
       return [null, null, 0];
     }
@@ -177,7 +194,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: emailController,
                       style: TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                          border: UnderlineInputBorder(), labelText: 'Email', errorText: emailController.text.isEmpty ? 'Email is required' : null),
+                          border: UnderlineInputBorder(),
+                          labelText: 'Email',
+                          errorText: emailController.text.isEmpty
+                              ? 'Email is required'
+                              : null),
                     ),
                     ElevatedButton(
                         onPressed: () async => login(),
@@ -186,84 +207,91 @@ class _MyHomePageState extends State<MyHomePage> {
                 ))
               : FutureBuilder(
                   future: getSecretSanta(),
-                  builder: (context, snapshot) => Center(
-                      child: snapshot.data![2] == 1
-                          ? Column(
-                              children: [
-                                Text(
-                                    "Your Secret Santa is: ${snapshot.data![0]}\n\nYour Secret Santa's Prompt is: ${snapshot.data![1]}"),
-                                Text(
-                                    "Please make sure to take a screenshot of this as this data will not be saved"),
-                                Text(
-                                    "*its not saved as this means that even Tom cannot access it*"),
-                              ],
-                            )
-                          : Center(
-                              child: Text(
-                                  "You have already been assigned a Secret Santa, if you have lost this info then please hate yourself coz now we have to start the process all over again"))))
-          : !userAdded ? Center(
-              child: FutureBuilder(
-              future: null,
-              builder: (context, snapshot) => Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20.0, right: 20.0, bottom: 20.0),
-                    child: TextFormField(
-                      onChanged: (value) => setState(() {
-                        if (value.isEmpty) {
-                          emailSuccess = false;
-                        } else {
-                          emailSuccess = true;
-                        }
-                      }),
-                      controller: emailController,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        border: UnderlineInputBorder(),
-                        labelText: 'Email'
-                        , errorText: !emailSuccess! ? 'Email is required' : null
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20.0, right: 20.0, bottom: 20.0),
-                    child: TextFormField(
-                      onChanged: (value) => setState(() {
-                        if (value.isEmpty) {
-                          nameSuccess = false;
-                        } else {
-                          nameSuccess = true;
-                        }
-                      }),
-                      controller: nameController,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        border: UnderlineInputBorder(),
-                        labelText: 'Name',
-                        errorText: !nameSuccess! ? 'Name is required' : null
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20.0, right: 20.0, bottom: 20.0),
-                    child: TextFormField(
-                      controller: promptController,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        border: UnderlineInputBorder(),
-                        labelText: 'Prompt (optional)'
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                      onPressed: addUser, child: const Text("Submit")),
-                ],
+                  builder: (context, snapshot) {
+                    if (snapshot.data == null) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    return Center(
+                        child: snapshot.data![2] == 1
+                            ? Column(
+                                children: [
+                                  Text(
+                                      "Your Secret Santa is: ${snapshot.data![0]}\n\nYour Secret Santa's Prompt is: ${snapshot.data![1]}", style: TextStyle(color: Colors.white)),
+                                  Text(
+                                      "Please make sure to take a screenshot of this as this data will not be saved", style: TextStyle(color: Colors.white)),
+                                  Text(
+                                      "*its not saved as this means that even Tom cannot access it*", style: TextStyle(color: Colors.white)),
+                                ],
+                              )
+                            : Center(
+                                child: Text(
+                                    "You have already been assigned a Secret Santa, if you have lost this info then please hate yourself coz now we have to start the process all over again", style: TextStyle(color: Colors.white))));
+                  })
+          // : !userAdded
+          //     ? Center(
+          //         child: FutureBuilder(
+          //         future: null,
+          //         builder: (context, snapshot) => Column(
+          //           mainAxisAlignment: MainAxisAlignment.center,
+          //           children: <Widget>[
+          //             Padding(
+          //               padding: const EdgeInsets.only(
+          //                   left: 20.0, right: 20.0, bottom: 20.0),
+          //               child: TextFormField(
+          //                 onChanged: (value) => setState(() {
+          //                   if (value.isEmpty) {
+          //                     emailSuccess = false;
+          //                   } else {
+          //                     emailSuccess = true;
+          //                   }
+          //                 }),
+          //                 controller: emailController,
+          //                 style: TextStyle(color: Colors.white),
+          //                 decoration: InputDecoration(
+          //                     border: UnderlineInputBorder(),
+          //                     labelText: 'Email',
+          //                     errorText:
+          //                         !emailSuccess! ? 'Email is required' : null),
+          //               ),
+          //             ),
+          //             Padding(
+          //               padding: const EdgeInsets.only(
+          //                   left: 20.0, right: 20.0, bottom: 20.0),
+          //               child: TextFormField(
+          //                 onChanged: (value) => setState(() {
+          //                   if (value.isEmpty) {
+          //                     nameSuccess = false;
+          //                   } else {
+          //                     nameSuccess = true;
+          //                   }
+          //                 }),
+          //                 controller: nameController,
+          //                 style: TextStyle(color: Colors.white),
+          //                 decoration: InputDecoration(
+          //                     border: UnderlineInputBorder(),
+          //                     labelText: 'Name',
+          //                     errorText:
+          //                         !nameSuccess! ? 'Name is required' : null),
+          //               ),
+          //             ),
+          //             Padding(
+          //               padding: const EdgeInsets.only(
+          //                   left: 20.0, right: 20.0, bottom: 20.0),
+          //               child: TextFormField(
+          //                 controller: promptController,
+          //                 style: TextStyle(color: Colors.white),
+          //                 decoration: InputDecoration(
+          //                     border: UnderlineInputBorder(),
+          //                     labelText: 'Prompt (optional)'),
+          //               ),
+          //             ),
+          //             ElevatedButton(
+          //                 onPressed: addUser, child: const Text("Submit")),
+          //           ],
+          //         ),
+          //       ))
+              : Center(child: Text("User Added")
               ),
-            )) : Center(child: Text("User Added")),
     );
   }
 }
